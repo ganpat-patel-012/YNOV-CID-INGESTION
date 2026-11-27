@@ -1,13 +1,15 @@
-import hashlib, json, uuid
+import hashlib, json, os, uuid
 from datetime import datetime, timezone
 import oracledb, requests
+from dotenv import load_dotenv
 
 SOURCE = "open-meteo"
 URL = "https://api.open-meteo.com/v1/forecast"
 PARAMS = {"latitude": 48.85, "longitude": 2.35, "current": "temperature_2m,wind_speed_10m"}
 
-# Mêmes paramètres que la connexion SQL Developer "oracle-free-staging"
-DB = dict(user="staging", password="staging", dsn="localhost:1521/FREEPDB1")
+# Identifiants lus dans .env (jamais commité)
+load_dotenv()
+DB = dict(user=os.environ["DB_USER"], password=os.environ["DB_PASSWORD"], dsn=os.environ["DB_DSN"])
 
 # Champs techniques de l'API qui changent à chaque appel sans que la donnée change.
 # Ils restent stockés dans le payload, mais sont exclus de l'empreinte : sinon
