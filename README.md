@@ -12,6 +12,9 @@ Le TP est réparti sur deux dépôts :
 Le SQL a été commité et poussé **avant** le Python : commit `9c5da43` « TP1: squelette staging »
 (YNOV-CID-SQL, 27/11/2026 15:27:33) puis le script dans ce dépôt.
 
+**Synthèse du TP (Word) :** [docs/TP1_Synthese_Ganpat_Patel.docx](docs/TP1_Synthese_Ganpat_Patel.docx) –
+résumé, résultats vérifiés, captures SQL Developer et commandes de vérification.
+
 ## 1. API choisie : Vélib' Métropole – état des stations
 
 - **URL :** https://velib-metropole-opendata.smovengo.cloud/opendata/Velib_Metropole/station_status.json
@@ -270,6 +273,7 @@ par un nouveau script `003_…sql` avec `ALTER TABLE`, jamais en modifiant le `0
 ├── mart/                     <- tables métier integration -> mart (vide pour l'instant)
 ├── tests/test_idempotence.py <- store() deux fois -> une seule ligne
 ├── docs/screenshots/         <- captures SQL Developer (frontières du schéma)
+├── docs/TP1_Synthese_Ganpat_Patel.docx <- synthèse du TP (Word)
 ├── .env.example              <- modèle du fichier .env (sans vrai mot de passe)
 └── requirements.txt
 ```
