@@ -146,6 +146,34 @@ pendant la boucle d'insertion, le commit unique en fin de `store()` garantit « 
 1 459 stations inchangées sont refusées, 65 stations modifiées entrent : cohérent avec
 1 524 stations.
 
+## 6. Pour aller plus loin
+
+**Un test** – `tests/test_idempotence.py` appelle `store()` deux fois avec le même objet
+(une station factice `TEST-…`) et vérifie qu'une seule ligne existe, puis qu'un contenu
+modifié entre bien comme nouvelle ligne. Il supprime ses lignes à la fin.
+
+```
+$ .venv/bin/python tests/test_idempotence.py
+OK : 2 appels identiques -> 1 ligne ; contenu modifié -> nouvelle ligne ; nettoyage fait
+```
+
+**Pagination** – l'API `station_status.json` de Vélib' n'est pas paginée : un seul appel
+renvoie les 1 524 stations. Elle indique en revanche sa fraîcheur : `lastUpdatedOther`
+(horodatage de la dernière mise à jour) et `ttl` (durée de validité, en secondes).
+
+**Une deuxième source** – `staging.meteo_raw` (Open-Meteo, `staging/ingest_meteo.py`) est
+déclarée dans un fichier séparé, `001_init_staging.sql`, et `velib_raw` dans `002_…`.
+Pourquoi un nouveau fichier plutôt que modifier l'ancien : un script déjà appliqué sur une
+base ne sera pas rejoué ; le modifier crée un écart entre ce que dit Git et ce qui existe
+réellement. Un nouveau fichier numéroté garde l'historique et permet à n'importe qui de
+reconstruire la même base en appliquant `000`, `001`, `002` dans l'ordre.
+
+**Métadonnées HTTP** – non implémenté. Une colonne `response_meta JSON` (code HTTP, en-têtes
+`Date`, `Last-Modified`, `ETag`…) servirait à diagnostiquer une source (quand a-t-elle
+commencé à répondre autrement ?), à prouver ce que l'API a renvoyé et quand, et à éviter
+de retélécharger une réponse inchangée (requête conditionnelle avec `ETag`). Elle s'ajouterait
+par un nouveau script `003_…sql` avec `ALTER TABLE`, jamais en modifiant le `002`.
+
 ## Organisation : un dossier par couche
 
 ```
@@ -155,6 +183,7 @@ pendant la boucle d'insertion, le commit unique en fin de `store()` garantit « 
 │   └── ingest_meteo.py       <- exemple de l'installation
 ├── integration/              <- transformations staging -> integration (vide pour l'instant)
 ├── mart/                     <- tables métier integration -> mart (vide pour l'instant)
+├── tests/test_idempotence.py <- store() deux fois -> une seule ligne
 ├── .env.example              <- modèle du fichier .env (sans vrai mot de passe)
 └── requirements.txt
 ```
