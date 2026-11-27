@@ -106,6 +106,57 @@ est le lancement fait après la panne (partie 5) : entre-temps, 65 stations avai
 (vélos pris ou rendus), elles sont entrées comme nouvelles lignes. C'est voulu : le staging
 accumule l'historique, seuls les contenus identiques sont refusés.
 
+**Résultat en fin de séance** (capture SQL Developer, connexion staging) – 5 run_id ont
+inséré des lignes, 4 062 lignes au total pour 1 524 stations distinctes :
+
+![GROUP BY run_id](docs/screenshots/runs_group_by.png)
+
+| run_id | lignes | explication |
+|---|---|---|
+| `…bb02f1c8` | 1 524 | premier lancement : toutes les stations |
+| `…2e82d564` | 65 | relance après la panne : stations qui avaient changé |
+| `…3edf7240` | 451 | relance 4 min plus tard (vérification après réorganisation du dépôt) |
+| `…8e4ae586` | 498 | relance 4 min plus tard (vérification de la grille) |
+| `…f6de4aee` | 1 524 | **l'API a changé de format**, voir ci-dessous |
+
+Tous les lancements immédiatement consécutifs (2e et 3e de chaque série) ont donné
+`0 insérées, 1524 doublons` et n'apparaissent donc pas dans le GROUP BY.
+
+### Observation : l'API a changé de format pendant le TP
+
+Le run `…f6de4aee` (14:44 UTC) a réinséré **les 1 524 stations**, alors que les autres
+relances n'en inséraient que quelques centaines. En comparant chaque payload avec la
+version précédente de la même station, **aucun n'était identique** :
+
+| Champ | Stations où il a changé | Avant | À 14:44 |
+|---|---|---|---|
+| `stationCode` | 1 524 | `"16107"` | **absent** |
+| `num_bikes_available_types` | 1 524 | `[{"mechanical": 10}, {"ebike": 1}]` | `[{}, {}]` |
+| `num_bikes_available` | 637 | (vélos pris ou rendus, normal) | |
+
+L'API Vélib' a renvoyé pendant quelques minutes une réponse dégradée (code station absent,
+détail mécanique / électrique vide). À 15:51, elle était revenue au format normal.
+
+Ce que ça montre :
+- **Le staging a fait son travail** : on stocke le brut, donc on a la preuve exacte de ce
+  que l'API a renvoyé et quand (`ingested_at`). Si on avait choisi nos colonnes à l'avance,
+  on aurait simplement eu des valeurs vides, sans pouvoir expliquer pourquoi.
+- **L'idempotence n'a pas été prise en défaut** : le contenu était réellement différent,
+  donc ces lignes sont légitimement nouvelles. Le hash protège contre les relances, pas
+  contre une source qui change.
+- **C'est le travail de la couche integration** : elle devra détecter ces réponses dégradées
+  (ex. `stationCode` absent) et les écarter ou les signaler, sans toucher au staging.
+
+Requête de vérification :
+
+```sql
+SELECT run_id, json_value(payload, '$.stationCode') AS code,
+       json_query(payload, '$.num_bikes_available_types') AS types
+FROM velib_raw
+WHERE external_id = '213688169'
+ORDER BY ingested_at;
+```
+
 **Le brut reste interrogeable :**
 
 ```sql
@@ -130,6 +181,10 @@ EXTERNAL_ID   VALEUR  INGESTED_AT
 37874517      21      27/11/26 14:28:16,745902
 210565680     33      27/11/26 14:28:16,746316
 ```
+
+Capture SQL Developer (le nombre de vélos lu directement dans le JSON brut) :
+
+![json_value num_bikes_available](docs/screenshots/json_value_velos.png)
 
 Aucun `external_id` vide (`SELECT count(*) … WHERE external_id IS NULL` → 0).
 
