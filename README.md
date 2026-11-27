@@ -6,8 +6,8 @@ Le TP est réparti sur deux dépôts :
 
 | Dépôt | Contenu |
 |---|---|
-| [YNOV-CID-SQL](https://github.com/ganpat-patel-012/YNOV-CID-SQL/tree/tp-1) | Le squelette : `sql/002_init_staging_velib.sql` |
-| [YNOV-CID-INGESTION](https://github.com/ganpat-patel-012/YNOV-CID-INGESTION/tree/tp-1) (ce dépôt) | Le script : `ingest_velib.py` |
+| [YNOV-CID-SQL](https://github.com/ganpat-patel-012/YNOV-CID-SQL/tree/tp-1) | Le squelette : `sql/staging/002_init_staging_velib.sql` |
+| [YNOV-CID-INGESTION](https://github.com/ganpat-patel-012/YNOV-CID-INGESTION/tree/tp-1) (ce dépôt) | Le script : `staging/ingest_velib.py` |
 
 Le SQL a été commité et poussé **avant** le Python : commit `9c5da43` « TP1: squelette staging »
 (YNOV-CID-SQL, 27/11/2026 15:27:33) puis le script dans ce dépôt.
@@ -31,7 +31,7 @@ Exemple d'objet :
 ## 2. Commandes
 
 **Appliquer le squelette** (une fois, dans SQL Developer, connexion `oracle-free-staging`) :
-ouvrir `sql/002_init_staging_velib.sql` du dépôt YNOV-CID-SQL et exécuter avec **F5**.
+ouvrir `sql/staging/002_init_staging_velib.sql` du dépôt YNOV-CID-SQL et exécuter avec **F5**.
 Résultat : `Table VELIB_RAW created.` ; `SELECT table_name FROM user_tables;` liste `VELIB_RAW`.
 
 Le fichier s'appelle `002_…` et non `001_…` : dans ce dépôt, `001_init_staging.sql` contient
@@ -44,7 +44,7 @@ on en ajoute un nouveau, numéroté à la suite (principe des migrations).
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 cp .env.example .env        # puis renseigner les identifiants
-.venv/bin/python ingest_velib.py
+.venv/bin/python staging/ingest_velib.py
 ```
 
 Le fichier `.env` (ignoré par Git) contient `DB_USER`, `DB_PASSWORD`, `DB_DSN`.
@@ -146,8 +146,15 @@ pendant la boucle d'insertion, le commit unique en fin de `store()` garantit « 
 1 459 stations inchangées sont refusées, 65 stations modifiées entrent : cohérent avec
 1 524 stations.
 
-## Fichiers
+## Organisation : un dossier par couche
 
-- `ingest_velib.py` – le script TP1 (`fetch()` ne connaît pas la base, `store()` ne connaît pas l'API).
-- `ingest_meteo.py` – le script d'exemple de l'installation.
-- `.env.example` – modèle du fichier `.env` (sans vrai mot de passe).
+```
+.
+├── staging/                  <- ingestion : API -> staging.<source>_raw
+│   ├── ingest_velib.py       <- TP 1 (fetch() ne connaît pas la base, store() ne connaît pas l'API)
+│   └── ingest_meteo.py       <- exemple de l'installation
+├── integration/              <- transformations staging -> integration (vide pour l'instant)
+├── mart/                     <- tables métier integration -> mart (vide pour l'instant)
+├── .env.example              <- modèle du fichier .env (sans vrai mot de passe)
+└── requirements.txt
+```
