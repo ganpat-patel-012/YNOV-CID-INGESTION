@@ -30,9 +30,22 @@ Exemple d'objet :
 
 ## 2. Commandes
 
-**Appliquer le squelette** (une fois, dans SQL Developer, connexion `oracle-free-staging`) :
-ouvrir `sql/staging/002_init_staging_velib.sql` du dépôt YNOV-CID-SQL et exécuter avec **F5**.
-Résultat : `Table VELIB_RAW created.` ; `SELECT table_name FROM user_tables;` liste `VELIB_RAW`.
+**Appliquer le squelette** (une seule fois, connecté en `staging`) : exécuter le fichier
+`sql/staging/002_init_staging_velib.sql` du dépôt YNOV-CID-SQL. Dans SQL Developer : l'ouvrir
+dans la feuille de la connexion `oracle-free-staging` (vérifier le nom dans l'onglet) et
+l'exécuter avec **F5**.
+
+Ce que j'ai fait : le fichier a été exécuté tel quel, une fois, avec l'utilisateur `staging`,
+par un petit script Python qui envoie son contenu à Oracle (même fichier, même utilisateur,
+même résultat qu'avec F5). Le relancer aujourd'hui donnerait `ORA-00955` (la table existe
+déjà) : c'est pour ça qu'un script de squelette ne s'applique qu'une fois.
+
+Vérification faite ensuite dans SQL Developer, connexion `oracle-free-staging` :
+
+```sql
+SELECT table_name FROM user_tables;   -- liste METEO_RAW et VELIB_RAW
+DESC velib_raw;                       -- 8 colonnes
+```
 
 Le fichier s'appelle `002_…` et non `001_…` : dans ce dépôt, `001_init_staging.sql` contient
 déjà la table `meteo_raw` de l'installation. On ne modifie jamais un script SQL déjà appliqué,
