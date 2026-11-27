@@ -24,8 +24,16 @@ FROM meteo_raw
 ORDER BY ingested_at DESC;
 ```
 
-## Remarque sur la déduplication
+## Idempotence
 
-La contrainte `UNIQUE (source, payload_hash)` ne bloque pas un second appel :
-la réponse de l'API contient `generationtime_ms`, qui change à chaque appel,
-donc l'empreinte SHA-256 change aussi.
+Relancer le script ne duplique rien :
+
+```
+run ... : 1 ligne(s) insérée(s), 0 doublon(s)
+run ... : 0 ligne(s) insérée(s), 1 doublon(s)
+```
+
+Le payload complet est stocké tel quel. L'empreinte `payload_hash` (SHA-256 du JSON
+aux clés triées) exclut seulement `generationtime_ms`, un champ technique de l'API qui
+change à chaque appel : sans cela, chaque relance aurait une empreinte différente et
+la contrainte `UNIQUE (source, payload_hash)` ne détecterait jamais de doublon.
