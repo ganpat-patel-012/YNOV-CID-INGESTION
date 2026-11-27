@@ -57,6 +57,23 @@ Le fichier `.env` (ignoré par Git) contient `DB_USER`, `DB_PASSWORD`, `DB_DSN`.
 | oracle-free-admin | `SELECT count(*) FROM staging.velib_raw;` | `0` | L'administrateur voit tout |
 | oracle-free-integration | `SELECT count(*) FROM staging.velib_raw;` | `ORA-00942: table or view "STAGING"."VELIB_RAW" does not exist` | La table existe, mais integration n'a pas le droit de la voir |
 
+Le tableau ci-dessus a été relevé juste après la création de la table (vide). Captures
+SQL Developer refaites après les ingestions, avec la même requête depuis les trois
+connexions : staging et admin voient les **mêmes 4 062 lignes**, integration reçoit toujours
+**ORA-00942**.
+
+**oracle-free-staging** → `4062` (propriétaire de la table)
+
+![staging : 4062](docs/screenshots/frontiere_1_staging.png)
+
+**oracle-free-admin** → `4062` (l'administrateur voit tout)
+
+![admin : 4062](docs/screenshots/frontiere_2_admin.png)
+
+**oracle-free-integration** → `ORA-00942` (pas le droit de voir staging)
+
+![integration : ORA-00942](docs/screenshots/frontiere_3_integration.png)
+
 ## 4. Trois lancements successifs
 
 ```
@@ -184,6 +201,7 @@ par un nouveau script `003_…sql` avec `ALTER TABLE`, jamais en modifiant le `0
 ├── integration/              <- transformations staging -> integration (vide pour l'instant)
 ├── mart/                     <- tables métier integration -> mart (vide pour l'instant)
 ├── tests/test_idempotence.py <- store() deux fois -> une seule ligne
+├── docs/screenshots/         <- captures SQL Developer (frontières du schéma)
 ├── .env.example              <- modèle du fichier .env (sans vrai mot de passe)
 └── requirements.txt
 ```
